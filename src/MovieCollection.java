@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Scanner;
+import java.util.function.Function;
 
 public class MovieCollection {
     private ArrayList<Movie> movies;
@@ -22,10 +23,10 @@ public class MovieCollection {
             System.out.println(e.getMessage());
             System.exit(1);
         }
-
+        menu();
     }
 
-    private void Menu() {
+    private void menu() {
         System.out.println("Welcome to the movie collection!");
         String menuOption = "";
 
@@ -51,6 +52,9 @@ public class MovieCollection {
 
     private void searchTitles() {
         String titleToSearch = scanner.nextLine().trim().toLowerCase();
+        for (Movie movie : findAndSortTitles(titleToSearch)) {
+            System.out.println(movie.getTitle());
+        }
     }
 
     private void searchCast() {
@@ -65,16 +69,46 @@ public class MovieCollection {
             }
         }
 
-
+        return sortMovies(relevantMovies, (m1, m2) -> m1.getTitle().compareToIgnoreCase(m2.getTitle()));
     }
 
-    private ArrayList<Movie> sortTitles(ArrayList<Movie> unsortedMovies, Comparator<Movie> comparator) {
-        if (unsortedMovies.size() == 1) {
-            return unsortedMovies;
+    private ArrayList<Movie> sortMovies(ArrayList<Movie> mainSide, Comparator<Movie> comparator) {
+        if (mainSide.size() == 1) {
+            return mainSide;
         }
 
-        int mid = unsortedMovies.size() / 2;
-        ArrayList<Movie> leftSide = sortTitles(new ArrayList<>(unsortedMovies.subList(0, mid)), comparator);
-        ArrayList<Movie> rightSize = sortTitles(new ArrayList<>(unsortedMovies.subList(mid, unsortedMovies.size())), comparator);
+        int mid = mainSide.size() / 2;
+        ArrayList<Movie> leftSide = sortMovies(new ArrayList<>(mainSide.subList(0, mid)), comparator);
+        ArrayList<Movie> rightSide = sortMovies(new ArrayList<>(mainSide.subList(mid, mainSide.size())), comparator);
+
+        int leftIdx = 0;
+        int rightIdx = 0;
+        int mainIdx = 0;
+
+        while (leftIdx < leftSide.size() && rightIdx < rightSide.size()) {
+            if (comparator.compare(leftSide.get(leftIdx), rightSide.get(rightIdx)) < 0) {
+                mainSide.set(mainIdx, leftSide.get(leftIdx));
+                leftIdx++;
+            } else {
+                mainSide.set(mainIdx, rightSide.get(rightIdx));
+                rightIdx++;
+            }
+            mainIdx++;
+        }
+
+        while (leftIdx < leftSide.size()) {
+            mainSide.set(mainIdx, leftSide.get(leftIdx));
+            leftIdx++;
+            mainIdx++;
+        }
+
+        while (rightIdx < rightSide.size()) {
+            mainSide.set(mainIdx, rightSide.get(rightIdx));
+            rightIdx++;
+            mainIdx++;
+        }
+
+        return mainSide;
+
     }
 }

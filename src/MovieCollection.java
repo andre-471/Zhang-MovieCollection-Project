@@ -7,6 +7,7 @@ public class MovieCollection {
     private ArrayList<Movie> movies;
     private LinkedHashMap<String, ArrayList<Movie>> actorMovieHashMap;
     private static Scanner scanner = new Scanner(System.in);
+
     public MovieCollection(String dataFilePath) {
         movies = new ArrayList<>();
         ArrayList<String> actors = new ArrayList<>();
@@ -72,33 +73,28 @@ public class MovieCollection {
     private void searchTitles() {
         String titleToSearch = scanner.nextLine().trim();
         ArrayList<Movie> filteredMovies = filterTitles(titleToSearch);
-        if (filteredMovies.isEmpty()) {
+        if (!filteredMovies.isEmpty()) {
+            viewMovieInfo(filteredMovies);
+        } else {
             System.out.println("No movie titles match that search term!");
-            return;
         }
 
-        viewMovieInfo(filteredMovies);
     }
 
     private void searchCast() {
         String nameToSearch = scanner.nextLine().trim().toLowerCase();
         ArrayList<String> filteredActors = filterActors(nameToSearch);
-        for (int i = 0; i < filteredActors.size(); i++) {
-            System.out.printf("%d. %s\n", i + 1, filteredActors.get(i));
-        }
-        filteredActors.sort(null);
-        for (int i = 0; i < filteredActors.size(); i++) {
-            System.out.printf("%d. %s\n", i + 1, filteredActors.get(i));
-        }
+        if (!filteredActors.isEmpty()) {
+            for (int i = 0; i < filteredActors.size(); i++) {
+                System.out.printf("%d. %s\n", i + 1, filteredActors.get(i));
+            }
 
-        if (filteredActors.isEmpty()) {
+            int actorIdx = scannerGetInt(1, filteredActors.size()) - 1;
+            viewMovieInfo(actorMovieHashMap.get(filteredActors.get(actorIdx)));
+        } else {
             System.out.println("no");
-            return;
         }
 
-        int actorIdx = scannerGetInt(1, filteredActors.size()) - 1;
-        System.out.println(filteredActors.get(actorIdx));
-        viewMovieInfo(actorMovieHashMap.get(filteredActors.get(actorIdx)));
     }
 
     private void viewMovieInfo(ArrayList<Movie> movies) {
@@ -106,6 +102,7 @@ public class MovieCollection {
             System.out.printf("%d. %s\n", i + 1, movies.get(i).getTitle());
         }
 
+        System.out.print("number ");
         int movieIdx = scannerGetInt(1, movies.size()) - 1;
         System.out.println(movies.get(movieIdx));
     }
@@ -175,14 +172,14 @@ public class MovieCollection {
         int integer;
         do {
             while (!scanner.hasNextInt()) {
-                System.out.println("not int");
+                System.out.print("Enter an integer: ");
                 scanner.nextLine();
             }
-        integer = scanner.nextInt();
-        scanner.nextLine();
-        if (integer < low || integer > max) {
-            System.out.printf("%d - %d\n", low, max);
-        }
+            integer = scanner.nextInt();
+            scanner.nextLine();
+            if (integer < low || integer > max) {
+                System.out.printf("Enter a integer between %d - %d inclusive: ", low, max);
+            }
         } while (integer < low || integer > max);
         return integer;
     }

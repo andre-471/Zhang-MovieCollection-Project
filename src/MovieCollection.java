@@ -1,30 +1,49 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Scanner;
-import java.util.function.Function;
+import java.util.*;
 
 public class MovieCollection {
     private ArrayList<Movie> movies;
+    private LinkedHashMap<String, ArrayList<Movie>> actorMovieHashMap;
     private static Scanner scanner = new Scanner(System.in);
     public MovieCollection(String dataFilePath) {
         movies = new ArrayList<>();
+        ArrayList<String> actors = new ArrayList<>();
+        actorMovieHashMap = new LinkedHashMap<>();
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(dataFilePath))) {
             bufferedReader.readLine();
             String line = bufferedReader.readLine();
             while (line != null) {
-                movies.add(new Movie(line));
+                Movie movie = new Movie(line);
+                movies.add(movie);
+                for (String actor : movie.getCast()) {
+                    if (!actors.contains(actor)) {
+                        actors.add(actor);
+                    }
+                }
                 line = bufferedReader.readLine();
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
             System.exit(1);
         }
+
+        sort(movies, (m1, m2) -> m1.getTitle().compareToIgnoreCase(m2.getTitle()));
+        sort(actors, String::compareToIgnoreCase);
+        for (String actor : actors) {
+            ArrayList<Movie> actorMovies = new ArrayList<>();
+            actorMovieHashMap.put(actor, actorMovies);
+            for (Movie movie : movies) {
+                if (movie.containsActor(actor)) {
+                    actorMovies.add(movie);
+                }
+            }
+        }
         menu();
     }
+
 
     private void menu() {
         System.out.println("Welcome to the movie collection!");
@@ -51,35 +70,76 @@ public class MovieCollection {
     }
 
     private void searchTitles() {
-        String titleToSearch = scanner.nextLine().trim().toLowerCase();
-        for (Movie movie : findAndSortTitles(titleToSearch)) {
-            System.out.println(movie.getTitle());
+        String titleToSearch = scanner.nextLine().trim();
+        ArrayList<Movie> filteredMovies = filterTitles(titleToSearch);
+        if (filteredMovies.isEmpty()) {
+            System.out.println("No movie titles match that search term!");
+            return;
         }
+
+        viewMovieInfo(filteredMovies);
     }
 
     private void searchCast() {
+        String nameToSearch = scanner.nextLine().trim().toLowerCase();
+        ArrayList<String> filteredActors = filterActors(nameToSearch);
+        for (int i = 0; i < filteredActors.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, filteredActors.get(i));
+        }
+        filteredActors.sort(null);
+        for (int i = 0; i < filteredActors.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, filteredActors.get(i));
+        }
 
+        if (filteredActors.isEmpty()) {
+            System.out.println("no");
+            return;
+        }
+
+        int actorIdx = scannerGetInt(1, filteredActors.size()) - 1;
+        System.out.println(filteredActors.get(actorIdx));
+        viewMovieInfo(actorMovieHashMap.get(filteredActors.get(actorIdx)));
     }
 
-    private ArrayList<Movie> findAndSortTitles(String title) {
-        ArrayList<Movie> relevantMovies = new ArrayList<>();
+    private void viewMovieInfo(ArrayList<Movie> movies) {
+        for (int i = 0; i < movies.size(); i++) {
+            System.out.printf("%d. %s\n", i + 1, movies.get(i).getTitle());
+        }
+
+        int movieIdx = scannerGetInt(1, movies.size()) - 1;
+        System.out.println(movies.get(movieIdx));
+    }
+
+    private ArrayList<Movie> filterTitles(String title) {
+        ArrayList<Movie> filteredMovies = new ArrayList<>();
         for (Movie movie : movies) {
-            if (movie.getTitle().toLowerCase().contains(title)) {
-                relevantMovies.add(movie);
+            if (movie.getTitle().toLowerCase().contains(title.toLowerCase())) {
+                filteredMovies.add(movie);
             }
         }
 
-        return sortMovies(relevantMovies, (m1, m2) -> m1.getTitle().compareToIgnoreCase(m2.getTitle()));
+        return filteredMovies;
     }
 
-    private ArrayList<Movie> sortMovies(ArrayList<Movie> mainSide, Comparator<Movie> comparator) {
-        if (mainSide.size() == 1) {
+    private ArrayList<String> filterActors(String otherActor) {
+        ArrayList<String> filteredActors = new ArrayList<>();
+        for (String actor : actorMovieHashMap.keySet()) {
+            if (actor.toLowerCase().contains(otherActor.toLowerCase())) {
+                filteredActors.add(actor);
+            }
+        }
+
+        return filteredActors;
+    }
+
+    private <T> ArrayList<T> sort(ArrayList<T> mainSide, Comparator<T> comparator) {
+        if (mainSide.size() <= 1) {
             return mainSide;
         }
 
         int mid = mainSide.size() / 2;
-        ArrayList<Movie> leftSide = sortMovies(new ArrayList<>(mainSide.subList(0, mid)), comparator);
-        ArrayList<Movie> rightSide = sortMovies(new ArrayList<>(mainSide.subList(mid, mainSide.size())), comparator);
+        ArrayList<T> leftSide = sort(new ArrayList<>(mainSide.subList(0, mid)), comparator);
+        ArrayList<T> rightSide = sort(new ArrayList<>(mainSide.subList(mid, mainSide.size())), comparator);
 
         int leftIdx = 0;
         int rightIdx = 0;
@@ -109,6 +169,21 @@ public class MovieCollection {
         }
 
         return mainSide;
+    }
 
+    private int scannerGetInt(int low, int max) {
+        int integer;
+        do {
+            while (!scanner.hasNextInt()) {
+                System.out.println("not int");
+                scanner.nextLine();
+            }
+        integer = scanner.nextInt();
+        scanner.nextLine();
+        if (integer < low || integer > max) {
+            System.out.printf("%d - %d\n", low, max);
+        }
+        } while (integer < low || integer > max);
+        return integer;
     }
 }

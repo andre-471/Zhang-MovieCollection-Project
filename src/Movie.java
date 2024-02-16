@@ -1,8 +1,7 @@
-import java.util.Arrays;
-
 public class Movie {
     private String title;
     private String[] cast;
+    private String castString;
     private String director;
     private String overview;
     private int runtime;
@@ -11,6 +10,7 @@ public class Movie {
         String[] data = csvLine.split(",");
         title = data[0];
         cast = data[1].split("\\|");
+        castString = data[1].replaceAll("\\|", ", ");
         director = data[2];
         overview = data[3];
         runtime = Integer.parseInt(data[4]);
@@ -25,31 +25,22 @@ public class Movie {
         return cast;
     }
 
-    public String getDirector() {
-        return director;
-    }
-
-    public String getOverview() {
-        return overview;
-    }
-
-    public int getRuntime() {
-        return runtime;
-    }
-
-    public double getUserRating() {
-        return userRating;
+    public boolean containsActor(String actor) {
+        for (String castMember : cast) {
+            if (castMember.equals(actor)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public String toString() {
         return "Title: " + title + "\n" +
-                "Cast: " + Arrays.toString(cast) + "\n" +
-                "Director " + director + "\n" +
+                "Cast: " + castString + "\n" +
+                "Director: " + director + "\n" +
                 "Overview: " + overview + "\n" +
                 "Runtime: " + runtime + "\n" +
                 "User Rating: " + userRating;
     }
-
-
 }

@@ -6,12 +6,13 @@ public class Movie {
     private String overview;
     private int runtime;
     private double userRating;
+
     public Movie(String csvLine){
         String[] data = csvLine.split(",");
         title = data[0];
         cast = data[1].split("\\|");
         castString = data[1].replaceAll("\\|", ", ");
-        director = data[2];
+        director = data[2].replaceAll("\\|", ", ");
         overview = data[3];
         runtime = Integer.parseInt(data[4]);
         userRating = Double.parseDouble(data[5]);
